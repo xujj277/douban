@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="referrer" content="never">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+	<link rel="stylesheet" type="text/css" href="3.css">
+	<link rel="stylesheet" type="text/css" href="http:////at.alicdn.com/t/font_598895_4hvc2kpj45wb3xr.css">
+	<title>Document</title>
+</head>
+<body>
+	<main>
+		<section class="top250">
+			<div class="container">
+	<!-- 		<div class="item">
+				<a href="#">
+					<img src="http://img7.doubanio.com/view/photo/s_ratio_poster/public/p480747492.jpg" alt="">
+					<div class="details">
+						<h2>霸王别姬</h2>
+						<div class="spacing"><span class="score">9.3分</span>/<span class="store">1000</span>收藏</div>
+						<div class="spacing"><span class="year">1994</span>/<span class="type">剧情、爱情</span></div>
+						<div class="spacing">导演：<span class="director">张艺谋</span></div>
+						<div class="spacing">主演：<span class="actor">张艺谋、张艺谋、张艺谋</span></div>	
+					</div>
+				</a>
+			</div> -->
+				
+			</div>
+			<div class="loading"><i class="iconfont icon-loading_ico"></i></div>
+		</section>
+		<section class="beimei">
+			<div class="container"></div>
+			<div class="loading"><i class="iconfont icon-loading_ico"></i>
+			</div>
+		</section>
+		<section class="search">
+			<div class="search-area">
+				<input type="text" placeholder="搜索电影"><span class="button">搜索</span>
+			</div>
+			<div class="container"></div>
+			<div class="loading"><i class="iconfont icon-loading_ico"></i>
+			</div>
+		</section>
+	</main>
+	<footer>
+		<div class="active">
+			<span><i class="iconfont icon-huangguan"></i></span>
+			<span>Top250</span></div>
+		<div>
+			<span><i class="iconfont icon-USCapitol"></i></span>
+			<span>北美</span></div>
+		<div>
+			<span><i class="iconfont icon-search"></i></span>
+			<span>搜索</span></div>
+	</footer>
+	<script>
+		var tap = {
+			createNode: function(movie){
+				var _this = this
+				var template = `<div class="item">
+				<a href="#">
+					<img src="http://img7.doubanio.com/view/photo/s_ratio_poster/public/p480747492.jpg" alt="">
+					<div class="details">
+						<h2>霸王别姬</h2>
+						<div class="spacing"><span class="score">9.3分</span>/<span class="store">1000</span>收藏</div>
+						<div class="spacing"><span class="year">1994</span>/<span class="type">剧情、爱情</span></div>
+						<div class="spacing">导演：<span class="director">张艺谋</span></div>
+						<div class="spacing">主演：<span class="actor">张艺谋、张艺谋、张艺谋</span></div>	
+					</div>
+				</a>
+			</div>`//节点
+				var $node = $(template)
+				$node.find('a').attr('href', movie.alt)
+				$node.find('img').attr('src',movie.images.small)
+				$node.find('h2').text(movie.title)
+				$node.find('.score').text(movie.rating.average)
+				$node.find('.store').text(movie.collect_count)
+				$node.find('.year').text(movie.year)
+				$node.find('.type').text(movie.genres.join('、'))
+				$node.find('.director').text(function(){
+					var directorArr = []
+					movie.directors.forEach(function(item){
+						directorArr.push(item.name)
+					})
+					return directorArr.join('、')
+				})
+				$node.find('.actor').text(function(){
+					var actorArr = []
+					movie.casts.forEach(function(item){
+						actorArr.push(item.name)
+					})
+					return actorArr.join('、')
+				})
+				return $node
+			}				
+		}
+
+
+		var top250 = {
+			init: function(){
+				this.$element = $('.top250')
+				this.isLoading = false
+				this.isFinish = false
+				this.index = 0
+				this.bind()
+				this.start()
+			},
+			bind: function(){
+				var _this = this
+				this.$element.scroll(function(){
+					if(_this.isToBottom()){_this.start()}			
+				})
+			},
+			start: function(){
+				var _this = this
+				this.getData(function(data){
+					_this.render(data)
+				})
+			},
+			getData: function(callback){
+				var _this = this
+				if(_this.isLoading) return
+				_this.isLoading = true
+				$('.loading').show()
+				$.ajax({
+					url: 'http://api.douban.com/v2/movie/top250',
+					type: 'GET',
+					data: {
+						start: _this.index,
+						count: 20
+					},
+					dataType: 'jsonp'
+				}).done(function(ret){
+					console.log(ret)
+					_this.index+=20
+					if(_this.index >= ret.total){
+						_this.isFinish = true
+					}
+					callback&&callback(ret)
+				}).fail(function(){
+					console.log('error')
+				}).always(function(){
+					_this.isLoading = false
+					$('.loading').hide()
+				})			
+			},
+			render: function(data){
+				var _this = this
+				data.subjects.forEach(function(movie){
+					_this.$element.find('.container').eq(0).append(tap.createNode(movie))
+				})
+			},
+			isToBottom: function(){
+				return this.$element.find('.container').height() <= this.$element.height() + this.$element.scrollTop() + 10
+			}
+		}
+	
+
+
+		var beimei = {
+			init: function(){
+				this.$element = $('.beimei')
+				this.start()
+			},
+			start: function(){
+				var _this = this
+				this.getData(function(data){
+					_this.render(data)
+				})
+			},
+			getData: function(callback){
+				var _this = this
+				$('.loading').show()
+				$.ajax({
+					url: 'http://api.douban.com/v2/movie/us_box',
+					type: 'GET',
+					dataType: 'jsonp'
+				}).done(function(ret){
+					console.log(ret)
+					callback&&callback(ret)
+				}).fail(function(){
+					console.log('error')
+				}).always(function(){
+
+					$('.loading').hide()
+				})			
+			},
+			render: function(data){
+				var _this = this
+				data.subjects.forEach(function(movie){
+					_this.$element.find('.container').eq(0).append(tap.createNode(movie.subject))
+				})
+			}
+		}
+
+
+
+		var search = {
+			init: function(){
+				this.$element = $('.search')
+				this.keyword = ''
+				this.start()
+				this.bind()
+			},
+			bind: function(){
+				var _this = this
+				this.$element.find('.button').click(function(){
+					_this.keyword = _this.$element.find('input').val()
+					_this.start()
+				})
+			},
+			start: function(){
+				var _this = this
+				this.getData(function(data){
+					_this.render(data)
+				})
+			},
+			getData: function(callback){
+				var _this = this
+				$('.loading').show()
+				$.ajax({
+					url: 'http://api.douban.com/v2/movie/search',
+					type: 'GET',
+					data: {
+						q: _this.keyword
+					},
+					dataType: 'jsonp'
+				}).done(function(ret){
+					console.log(ret)
+					callback&&callback(ret)
+				}).fail(function(){
+					console.log('error')
+				}).always(function(){
+
+					$('.loading').hide()
+				})			
+			},
+			render: function(data){
+				var _this = this
+				data.subjects.forEach(function(movie){
+					_this.$element.find('.container').eq(0).append(tap.createNode(movie))
+				})
+			}
+		}
+
+
+
+		var app = {
+			init: function(){
+				this.$tabs = $('footer>div')
+				this.$panels = $('section')
+				this.bind()
+				top250.init()
+				beimei.init()
+				search.init()
+			},
+			bind: function(){
+				var _this = this
+				this.$tabs.on('click',function(){
+					var index = $(this).index()
+					_this.$panels.hide().eq(index).fadeIn()
+					$(this).addClass('active').siblings().removeClass('active')
+				})
+			}
+		}
+
+		app.init()
+	</script>
+</body>
+</html>
