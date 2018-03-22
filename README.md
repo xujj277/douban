@@ -1,2 +1,3 @@
-# douban
-- 半成品：http://js.jirengu.com/kahujiqiso#
+# 豆瓣APP
+
+- 预览链接：http://js.jirengu.com/kugasujomo
